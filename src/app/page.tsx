@@ -1,113 +1,167 @@
-import Image from "next/image";
+"use client";
+import { useEffect, useRef, useState } from 'react';
+import { listInfo, ListPlayer, ListPlayerContext, track } from 'react-list-player';
+import { emptyTrack, mapTracks, TrackProps, TrendingTrack} from './trackInterfaces';
+import  { MyListInfoCard } from './dropDownMenu';
 
-export default function Home() {
+const playlistInfo: listInfo = {
+    type: 'playlist',
+    name: 'Audius Trending Tracks',
+    creationDate: "7/29/2024",
+    numTracks: 100,
+    duration: "",
+}
+
+
+  
+function App() {
+    const [selectedTrack, setSelectedTrack] = useState(0);   // -1 means no track is selected
+    const [audioSrc, setAudioSrc] = useState();
+    const [isPlaying, setIsPlaying] = useState(false);        // play/pause
+    const [isMuted, setIsMuted] = useState(false);            // mute/unmute
+    const [genre, setGenre] = useState("");
+    const [trendingTracks, setTrendingTracks] = useState<TrackProps>();
+    const [search, setSearch]: [string, (search: string) => void] = useState("");
+    const [persistTracks, setPersistTracks] = useState<TrackProps>();
+    const [checkBox, setCheckBox] = useState(false);
+
+    const audioRef = useRef<HTMLAudioElement>(null);
+
+
+    //const audioSrcs = ["/free-audio/tokyo cafe.mp3", "/free-audio/my universe.mp3", "/free-audio/smoke.mp3", "/free-audio/good night.mp3", "/free-audio/hear me.mp3", "/free-audio/baby mandala.mp3", "/free-audio/midnight forest.mp3", "/free-audio/separation.mp3", "/free-audio/drive breakbeat.mp3", "/free-audio/glossy.mp3"];
+
+    const handleOnPlay = (index:number, resume:boolean) => {
+        if(index === selectedTrack && !resume) {
+            audioRef.current?.load();
+            audioRef.current?.play();
+        } else {
+            audioRef.current?.play();
+        }
+    }
+
+    const handleOnPause = () => {
+        audioRef.current?.pause();
+    }
+    
+    const DropdownMenu = () => {
+        return (
+            <div className="dropdown-menu">
+                <select onChange={(e) => setGenre(e.target.value)}>
+                    <option value = "">Select Genre</option>
+                    <option value="">All</option>
+                    <option value="Electronic">Electronic</option>
+                    <option value="Hip-Hop/Rap">Hip-Hop/Rap</option>
+                </select>
+            </div>
+        );
+    };
+
+    useEffect(() => {
+        const fetchTrendingTracks = (newGenre: string) => {
+            fetch('https://discoveryprovider.audius.co/v1/tracks/trending?genre=' + newGenre)
+            .then((res) => {
+              return res.json();
+            })
+            .then((data) => {
+              setTrendingTracks(data);
+              setPersistTracks(data);
+            });
+        };
+        fetchTrendingTracks(genre);
+    }, [genre]);
+
+    function searchResult(trendingTrack: TrendingTrack) {
+        if (search == "" || trendingTrack.title.toLowerCase().includes(search.toLowerCase())) {
+            return trendingTrack;
+        }
+    }
+
+    useEffect(() => {
+        const filterOnSearch = (search: string) => {
+            if (persistTracks != undefined) {
+                let searchResults = persistTracks.data.filter(searchResult);
+                if (searchResults.length <= 0) {
+                    searchResults = [emptyTrack];
+                }
+                const tp: TrackProps = {data: searchResults};
+                setTrendingTracks(tp);
+            } else {
+                const tp: TrackProps = {data: [emptyTrack]};
+                setTrendingTracks(tp);
+            }
+        };
+        filterOnSearch(search);
+    }, [search]);
+
+    const handleSearchUpdate = (e: { target: { value: string; }; }) => {
+        setSearch(e.target.value);
+      };
+
+    
+    useEffect(() => {
+        const sortByFav = (checkBox: boolean) => {
+            if (trendingTracks != undefined) {
+                if (checkBox) {
+                    let sortedTracks = trendingTracks.data.sort((a,b) => {
+                        const aRank = a.favorite !== undefined ? (a.favorite ? 1 : 0) : Infinity;
+                        const bRank = b.favorite !== undefined ? (b.favorite ? 1 : 0) : Infinity;
+                        return aRank - bRank;
+                    })
+                    const tp: TrackProps = {data: sortedTracks};
+                    setTrendingTracks(tp);
+                } else {
+                    let sortedTracks = trendingTracks.data.sort((a,b) => b.favorite_count - a.favorite_count);
+                    const tp: TrackProps = {data: sortedTracks};
+                    setTrendingTracks(tp);
+                }
+            }   
+        };
+        sortByFav(checkBox);
+    }, [checkBox]);
+
+    const handleCheckBox = () => {
+        setCheckBox(!checkBox);
+    }
+
+    // function songEnded = () => {
+    //     setSelectedTrack(selectedTrack + 1);
+    //     const fetchSrc = fetch("https://discoveryprovider.audius.co/v1/tracks/${trendingTracks?.data[selectedTrack].id}/stream")
+    //     .then(resp => setAudioSrc(resp));
+    // }
+               
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <ListPlayerContext.Provider value={{selectedTrack, setSelectedTrack, isPlaying, setIsPlaying, isMuted, setIsMuted}}>
+      <div className='container-for-sizing-player'>
+        <ListPlayer  
+          tracks={trendingTracks?trendingTracks.data.map(trendingTrack => (mapTracks(trendingTrack))):[mapTracks(emptyTrack)]}
+          listInfo={playlistInfo} 
+          playCallback={handleOnPlay} 
+          pauseCallback={handleOnPause}
+          children={
+          <div className="lh-children-cont lh-listinfocard-cont">
+            <MyListInfoCard track={trendingTracks?trendingTracks.data[selectedTrack]:emptyTrack}  />
+            <div className='bottom-div' >
+                <div className='title'><input type="text" placeholder="Search..." onChange={handleSearchUpdate} /></div>
+                <div className='genre' ><DropdownMenu /> </div>
+                <div className='genre'>
+                    <label>Sort by favorites: <input type="checkbox" onChange={handleCheckBox} /></label> 
+                </div>
+            </div>
         </div>
-      </div>
-
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
+        }
         />
       </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  );
+      <audio ref={audioRef} 
+        src={audioSrc}
+        muted={isMuted} 
+        onEnded={() => {setSelectedTrack(selectedTrack + 1)}}
+      />
+    </ListPlayerContext.Provider>
+  )
 }
+
+
+export default App;
+
+
