@@ -32,11 +32,13 @@ export interface Artwork {
 
 export function mapTracks(trendingTrack: TrendingTrack = emptyTrack): track {
   const { artwork, genre, mood, title, duration } = trendingTrack;
+  const minutes = Math.floor(duration / 60);
+  const seconds = duration % 60;
   const playerTrack: track = {
     title: [{type: 'text', content: title}],
     album: [{type: 'text', content: mood?mood:''}],
     artist: [{type: 'text', content: genre?genre:''}],
-    duration: duration.toString(),
+    duration: minutes.toString() + ":" + seconds.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false}),
     imageSrc: artwork?.["150x150"],
   };
   return playerTrack;

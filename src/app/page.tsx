@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { listInfo, ListPlayer, ListPlayerContext, track } from 'react-list-player';
 import { emptyTrack, mapTracks, TrackProps, TrendingTrack} from './trackInterfaces';
-import  { MyListInfoCard } from './dropDownMenu';
+import  { CustomListInfoCard } from './customListInfoCard';
 
 const playlistInfo: listInfo = {
     type: 'playlist',
@@ -13,12 +13,11 @@ const playlistInfo: listInfo = {
 }
 
 
-  
 function App() {
-    const [selectedTrack, setSelectedTrack] = useState(0);   // -1 means no track is selected
+    const [selectedTrack, setSelectedTrack] = useState(0);   
     const [audioSrc, setAudioSrc] = useState();
-    const [isPlaying, setIsPlaying] = useState(false);        // play/pause
-    const [isMuted, setIsMuted] = useState(false);            // mute/unmute
+    const [isPlaying, setIsPlaying] = useState(false);      
+    const [isMuted, setIsMuted] = useState(false);            
     const [genre, setGenre] = useState("");
     const [trendingTracks, setTrendingTracks] = useState<TrackProps>();
     const [search, setSearch]: [string, (search: string) => void] = useState("");
@@ -26,9 +25,6 @@ function App() {
     const [checkBox, setCheckBox] = useState(false);
 
     const audioRef = useRef<HTMLAudioElement>(null);
-
-
-    //const audioSrcs = ["/free-audio/tokyo cafe.mp3", "/free-audio/my universe.mp3", "/free-audio/smoke.mp3", "/free-audio/good night.mp3", "/free-audio/hear me.mp3", "/free-audio/baby mandala.mp3", "/free-audio/midnight forest.mp3", "/free-audio/separation.mp3", "/free-audio/drive breakbeat.mp3", "/free-audio/glossy.mp3"];
 
     const handleOnPlay = (index:number, resume:boolean) => {
         if(index === selectedTrack && !resume) {
@@ -43,7 +39,8 @@ function App() {
         audioRef.current?.pause();
     }
     
-    const DropdownMenu = () => {
+    //select genre of trending tracks
+    const GenreSelect = () => {
         return (
             <div className="dropdown-menu">
                 <select onChange={(e) => setGenre(e.target.value)}>
@@ -70,6 +67,7 @@ function App() {
         fetchTrendingTracks(genre);
     }, [genre]);
 
+    //make tracks searchable
     function searchResult(trendingTrack: TrendingTrack) {
         if (search == "" || trendingTrack.title.toLowerCase().includes(search.toLowerCase())) {
             return trendingTrack;
@@ -98,6 +96,7 @@ function App() {
       };
 
     
+    //sort tracks by favorites
     useEffect(() => {
         const sortByFav = (checkBox: boolean) => {
             if (trendingTracks != undefined) {
@@ -122,12 +121,6 @@ function App() {
     const handleCheckBox = () => {
         setCheckBox(!checkBox);
     }
-
-    // function songEnded = () => {
-    //     setSelectedTrack(selectedTrack + 1);
-    //     const fetchSrc = fetch("https://discoveryprovider.audius.co/v1/tracks/${trendingTracks?.data[selectedTrack].id}/stream")
-    //     .then(resp => setAudioSrc(resp));
-    // }
                
 
   return (
@@ -140,10 +133,10 @@ function App() {
           pauseCallback={handleOnPause}
           children={
           <div className="lh-children-cont lh-listinfocard-cont">
-            <MyListInfoCard track={trendingTracks?trendingTracks.data[selectedTrack]:emptyTrack}  />
+            <CustomListInfoCard track={trendingTracks?trendingTracks.data[selectedTrack]:emptyTrack}  />
             <div className='bottom-div' >
                 <div className='title'><input type="text" placeholder="Search..." onChange={handleSearchUpdate} /></div>
-                <div className='genre' ><DropdownMenu /> </div>
+                <div className='genre' ><GenreSelect /> </div>
                 <div className='genre'>
                     <label>Sort by favorites: <input type="checkbox" onChange={handleCheckBox} /></label> 
                 </div>
@@ -152,11 +145,12 @@ function App() {
         }
         />
       </div>
-      <audio ref={audioRef} 
+      {//idea of how to add audio files
+      /* <audio ref={audioRef} 
         src={audioSrc}
         muted={isMuted} 
         onEnded={() => {setSelectedTrack(selectedTrack + 1)}}
-      />
+      /> */}
     </ListPlayerContext.Provider>
   )
 }

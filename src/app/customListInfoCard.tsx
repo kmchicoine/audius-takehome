@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { listInfo } from "react-list-player";
 import { CgMusicNote } from "react-icons/cg";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
 import { TrendingTrack } from "./trackInterfaces";
 
 
-export const MyListInfoCard = ({ track }: { track: TrendingTrack }) => {
+export const CustomListInfoCard = ({ track }: { track: TrendingTrack }) => {
     const [favorite, setFavorite] = useState(track.favorite?track.favorite:false);
     useEffect(() => {
         setFavorite(track.favorite?track.favorite:false);
@@ -31,11 +30,18 @@ export const MyListInfoCard = ({ track }: { track: TrendingTrack }) => {
                 <div className="lt-info-stats">
                     <span className="text number">User: {track.user.name}</span>
                 </div>
+                {track?.user.bio
+                    ?
+                    <div className="lt-info-stats">
+                        <span className="text pure">User bio: {track?.user.bio}</span>
+                    </div>
+                    :
+                    <div className="lt-info-stats">
+                        <span className="text pure">(User bio unlisted)</span>
+                    </div>
+                }
                 <div>
                     <button onClick={imgChangeHandler}>{favorite ? <FaHeart/> : <FaRegHeart/> } </button>
-                </div>
-                <div>
-                    <p >track.favorite_count: {""+track.favorite_count} </p>
                 </div>
                 
             </div>
